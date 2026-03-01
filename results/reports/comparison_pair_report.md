@@ -1,6 +1,6 @@
 # Full Comparison Report: Sensor A Channel 3 (g) vs Sensor B accZ(g)
 
-Generated: 2026-03-01 22:25:13
+Generated: 2026-03-01 22:44:03
 
 ---
 
@@ -8,30 +8,30 @@ Generated: 2026-03-01 22:25:13
 
 | Metric | Sensor A | Sensor B | Difference |
 |--------|----------|----------|------------|
-| mean | 0.000002 | -0.000015 | 0.000017 |
-| std | 0.035937 | 0.051923 | -0.015986 |
-| rms | 0.035937 | 0.051923 | -0.015986 |
+| mean | -0.000021 | -0.000044 | 0.000024 |
+| std | 0.036750 | 0.052619 | -0.015869 |
+| rms | 0.036750 | 0.052619 | -0.015869 |
 | peak | 0.185764 | 0.413046 | -0.227282 |
-| peak_to_peak | 0.359800 | 0.823578 | -0.463777 |
-| crest_factor | 5.169206 | 7.954978 | -2.785772 |
+| peak_to_peak | 0.359800 | 0.754486 | -0.394686 |
+| crest_factor | 5.054777 | 7.849742 | -2.794966 |
 
 ## Correlation Analysis
 
-- Pearson r: 0.045229
-- R²: 0.002046
-- Spearman r: 0.043417
+- Pearson r: 0.048372
+- R²: 0.002340
+- Spearman r: 0.055424
 
 ## Error Metrics
 
-- MAE: 0.047146
-- RMSE: 0.061795
-- NRMSE: 0.171749
-- Max Error: 0.421887
+- MAE: 0.048088
+- RMSE: 0.062708
+- NRMSE: 0.174285
+- Max Error: 0.415410
 
 ## Frequency Domain Analysis
 
 | Metric | Sensor A | Sensor B |
 |--------|----------|----------|
-| dominant_frequency | 5.49 Hz | 5.49 Hz |
-| spectral_centroid | 39.55 Hz | 65.02 Hz |
-| median_frequency | 17.60 Hz | 43.03 Hz |
+| dominant_frequency | 11.64 Hz | 11.72 Hz |
+| spectral_centroid | 39.89 Hz | 65.37 Hz |
+| median_frequency | 17.77 Hz | 42.93 Hz |

@@ -48,6 +48,7 @@ def run_pipeline(config_path: str = "configs/project.yaml", verbose: bool = True
             output_file=sensor_b_out,
             apply_filter=bool(b_opt.get("apply_filter", True)),
             remove_dc_offset=bool(b_opt.get("remove_dc_offset", True)),
+            timezone_offset_hours=int(b_opt.get("timezone_offset_hours", 0)),
             verbose=verbose,
         )
 

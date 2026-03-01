@@ -8,8 +8,8 @@ sensors:
     manufacturer: "National Instruments"
     model: "DAQ (Setup5)"
     specifications:
-      sampling_rate: 2048
-      data_unit: "m/s^2"
+      sampling_rate: 1651
+      data_unit: "g"
     data_format:
       file_extension: ".csv"
       delimiter: ","
@@ -23,7 +23,7 @@ sensors:
     manufacturer: "Analog Devices"
     model: "ADXL355"
     specifications:
-      sampling_rate: 2000
+      sampling_rate: 1651
       data_unit: "g"
     data_format:
       file_extension: ".csv"
@@ -53,7 +53,7 @@ pipeline:
       apply_filter: true
       remove_dc: true
       convert_to_g: false
-      timezone_offset_hours: 7
+      timezone_offset_hours: 0
 
   sensor_b:
     raw_file: "data/raw/sensor_B/1651_28_2_2026_9_22_44_1651Hz.csv"
@@ -61,11 +61,12 @@ pipeline:
     preprocess:
       apply_filter: true
       remove_dc_offset: true
+      timezone_offset_hours: -7
 
   comparison:
     window:
-      start_utc: "2026-02-28T09:23:15Z"
-      duration_seconds: 120
+      start_utc: "2026-02-28T02:23:30Z"
+      duration_seconds: 100
 
     sensor_a:
       time_column: "datetime_utc"

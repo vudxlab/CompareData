@@ -30,16 +30,23 @@ def preprocess_adxl355(
     output_file: str | Path | None = None,
     apply_filter: bool = True,
     remove_dc_offset: bool = True,
+    timezone_offset_hours: int = 0,
     verbose: bool = True,
 ) -> pd.DataFrame:
     """
     Preprocess ADXL355 data.
+
+    timezone_offset_hours: hours to add to epoch to correct to UTC
+    (e.g. -7 if the device clock was set to UTC+7 instead of UTC).
     """
     input_file = Path(input_file)
     df = load_adxl355(input_file).copy()
 
     if verbose:
         print("[adxl355] input:", input_file)
+
+    if timezone_offset_hours != 0:
+        df["timestamp"] = df["timestamp"] + timezone_offset_hours * 3600
 
     df = add_utc_column(df, timestamp_col="timestamp", utc_col="datetime_utc")
     df = add_relative_time_column(df, timestamp_col="timestamp", relative_col="time_s")
