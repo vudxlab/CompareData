@@ -1,6 +1,6 @@
-# Full Comparison Report: Sensor A Channel6 vs Sensor B accZ
+# Full Comparison Report: Sensor A Channel 3 (g) vs Sensor B accZ(g)
 
-Generated: 2026-03-01 22:15:42
+Generated: 2026-03-01 22:25:13
 
 ---
 

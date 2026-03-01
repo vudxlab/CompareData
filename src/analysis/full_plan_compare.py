@@ -184,8 +184,8 @@ def run_full_report_from_config(config_path: str = "configs/project.yaml") -> Di
         t,
         sensor_a,
         sensor_b,
-        labels=("Sensor A (Channel6, g)", "Sensor B (accZ, g)"),
-        title="Time Series Comparison (100s, 100Hz)",
+        labels=(f"Sensor A ({sa_cfg['value_column']})", f"Sensor B ({sb_cfg['value_column']})"),
+        title="Time Series Comparison",
         ylabel="Acceleration (g)",
         save_path=str(fig_time),
     )
@@ -288,7 +288,7 @@ def run_full_report_from_config(config_path: str = "configs/project.yaml") -> Di
     report_path = generate_report(
         comparison_results=results,
         output_path=str(report_md),
-        title="Full Comparison Report: Sensor A Channel6 vs Sensor B accZ",
+        title=f"Full Comparison Report: Sensor A {sa_cfg['value_column']} vs Sensor B {sb_cfg['value_column']}",
     )
 
     # Save compact summary CSV
