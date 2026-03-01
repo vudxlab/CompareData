@@ -8,52 +8,70 @@ So sanh do tuong dong va sai khac giua hai chuoi gia toc do boi hai he cam bien 
 
 ### 2.1 Cam bien
 
-- **Sensor A**: NI DAQ Setup5 (`Channel 1..8`, don vi `m/s^2`)
-- **Sensor B**: ADXL355 (`accX/accY/accZ`, don vi `g`)
+- **Sensor A**: NI DAQ Setup5
+  - Cac kenh: `Channel 1 (g)`, `Channel 2 (g)`, `Channel 3 (g)`
+  - Don vi goc: `g` (du lieu moi) hoac `m/s^2` (du lieu cu, can `convert_to_g: true`)
+  - Tan so lay mau: 1651 Hz (co the khac tuy file)
+  - Dinh dang timestamp: Unix epoch (UTC+7 tren may tinh noi, can kiem tra `timezone_offset_hours`)
+
+- **Sensor B**: ADXL355
+  - Cac kenh: `accX(g)`, `accY(g)`, `accZ(g)`
+  - Don vi: `g`
+  - Tan so lay mau: ~1651 Hz
+  - Dinh dang timestamp: Unix epoch (UTC chuan)
 
 ### 2.2 Cau hinh so sanh hien tai
 
-- Chuoi A: `channel6(m/s^2)` -> quy doi sang `g`
-- Chuoi B: `accZ(g)`
-- Cua so thoi gian: 100 giay tu `10:00:00 UTC`
-- Tan so phan tich muc tieu: `100 Hz` (resample)
+- Chuoi A: `Channel 3 (g)` (truc Z sensor A)
+- Chuoi B: `accZ(g)` (truc Z sensor B)
+- Cua so thoi gian: 120 giay tu `2026-02-28T09:23:15Z`
+- Tan so resample muc tieu: `500 Hz`
 - Canh hang: cross-correlation, `max_lag_seconds = 2.0`
 
 ## 3. Quy trinh xu ly du lieu
 
 ### 3.1 Tien xu ly
+
 1. Doc du lieu raw theo dinh dang rieng tung sensor
 2. Chuyen doi ve timestamp UTC
-3. Loai bo DC offset
-4. Loc high-pass va low-pass
-5. Luu vao `data/processed`
+   - Sensor A: neu file dung dong ho UTC+7, cong them `timezone_offset_hours * 3600` vao epoch
+   - Sensor B: epoch UTC chuan, khong can chinh
+3. Loai bo DC offset (mean subtraction)
+4. Loc high-pass (0.5 Hz) va low-pass (500 Hz)
+5. Luu vao `data/processed/`
 
 ### 3.2 Chuan hoa truoc so sanh
-1. Cat du lieu theo cua so UTC
-2. Quy doi don vi ve `g`
-3. Resample ve tan so chung (100 Hz)
-4. Canh hang theo do tre toi uu
+
+1. Cat du lieu theo cua so UTC da khai bao
+2. Resample ve tan so chung (`target_fs_hz`)
+3. Canh hang theo do tre toi uu bang cross-correlation
+4. Tinh toan metrics
 
 ## 4. Tap chi so bao cao
 
 ### 4.1 Mien thoi gian
+
 - Mean, Std, RMS, Peak, Peak-to-peak, Crest factor
 
 ### 4.2 Mien tan so
+
 - FFT
 - PSD
 - Dominant frequency
 - Spectral centroid
 - Median frequency
+- FFT peaks (top N trong dai 0–50 Hz)
 
 ### 4.3 So sanh truc tiep
-- Pearson/Spearman
+
+- Pearson r, Spearman r, R²
 - RMSE, MAE, NRMSE, Max error
-- Bland-Altman
+- Bland-Altman plot
 
 ## 5. Dau ra
 
 - Bang tong hop: `results/tables/*metrics*.csv`
+- FFT peaks: `results/tables/*fft_peaks*.csv`
 - Du lieu da canh hang: `results/tables/*aligned*.csv`
 - Hinh phan tich: `results/figures/.../*.png`
 - Bao cao markdown: `results/reports/..._report.md`
