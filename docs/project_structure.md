@@ -20,7 +20,8 @@ Tai lieu nay mo ta cau truc thu muc chuan cho project so sanh du lieu gia toc.
   - config duy nhat cho toan bo project
   - khai bao sensor metadata + preprocess + comparison + output
   - khai bao cap chuoi can so sanh, cua so thoi gian, tan so resample
-  - tham so `timezone_offset_hours` de chinh lech gio UTC cho sensor A
+  - tham so `timezone_offset_hours` de chinh lech gio UTC cho tung sensor
+    (sensor A = 0, sensor B = -7)
 
 ## Cac module phan tich chinh trong src
 
@@ -35,7 +36,8 @@ Tai lieu nay mo ta cau truc thu muc chuan cho project so sanh du lieu gia toc.
 
 - `src/analysis/window_compare.py`
   - So sanh 1 cap chuoi theo config
-  - Chuan hoa don vi, canh hang, tinh metrics co ban
+  - Cat window theo timestamp UTC tuyet doi, resample, tinh metrics
+  - Khong dung cross-correlation alignment (da co timestamp UTC chuan xac)
 
 - `src/analysis/full_plan_compare.py`
   - Chay full workflow theo plan
