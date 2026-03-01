@@ -122,6 +122,7 @@ def preprocess_setup5_keep_channels(
     apply_filter: bool = True,
     remove_dc: bool = True,
     convert_to_g: bool = True,
+    timezone_offset_hours: int = 0,
     verbose: bool = True,
 ) -> pd.DataFrame:
     """
@@ -134,28 +135,38 @@ def preprocess_setup5_keep_channels(
     - <Channel n (...)>_filtered (if apply_filter=True)
 
     Notes:
+    - Supports two timestamp formats:
+        * Old format: "Time (s)" — relative seconds from a start time in metadata.
+        * New format: "Time (UTC epoch s)" — Unix epoch seconds, possibly in local timezone.
+    - timezone_offset_hours: hours to add to epoch to correct to UTC (e.g. 7 for UTC+7).
     - If convert_to_g=True, channel values are converted from m/s^2 to g
       and column units are renamed to "(g)" while keeping "Channel n" naming.
     """
     input_file = Path(input_file)
     df, metadata = load_setup5_with_metadata(input_file)
 
-    if "Time (s)" not in df.columns:
-        raise ValueError("Missing required column 'Time (s)' in Setup5 file.")
-
     channel_cols = detect_setup5_channel_columns(list(df.columns))
     if not channel_cols:
         raise ValueError("No channel columns detected in Setup5 file.")
 
-    start_time_str = metadata.get("Start Time")
-    if not start_time_str:
-        raise ValueError("Missing 'Start Time' in Setup5 metadata.")
-    start_utc = datetime.strptime(start_time_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
-
     df = df.copy()
-    df["time_s"] = df["Time (s)"].astype(float)
-    df["datetime_utc"] = start_utc + pd.to_timedelta(df["time_s"], unit="s")
-    df["timestamp_unix"] = df["datetime_utc"].astype("int64") / 1e9
+    if "Time (UTC epoch s)" in df.columns:
+        tz_offset_s = timezone_offset_hours * 3600
+        df["timestamp_unix"] = df["Time (UTC epoch s)"].astype(float) + tz_offset_s
+        df["datetime_utc"] = pd.to_datetime(df["timestamp_unix"], unit="s", utc=True)
+        df["time_s"] = df["timestamp_unix"] - df["timestamp_unix"].iloc[0]
+        time_col_name = "Time (UTC epoch s)"
+    elif "Time (s)" in df.columns:
+        start_time_str = metadata.get("Start Time") or metadata.get("Start Time (UTC)")
+        if not start_time_str:
+            raise ValueError("Missing 'Start Time' in Setup5 metadata.")
+        start_utc = datetime.strptime(start_time_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+        df["time_s"] = df["Time (s)"].astype(float)
+        df["datetime_utc"] = start_utc + pd.to_timedelta(df["time_s"], unit="s")
+        df["timestamp_unix"] = df["datetime_utc"].astype("int64") / 1e9
+        time_col_name = "Time (s)"
+    else:
+        raise ValueError("Missing required time column ('Time (s)' or 'Time (UTC epoch s)') in Setup5 file.")
 
     fs = 1.0 / np.mean(np.diff(df["time_s"].to_numpy()))
 
@@ -169,7 +180,7 @@ def preprocess_setup5_keep_channels(
             filtered = lowpass_filter(filtered, cutoff=500, fs=fs, order=4)
             df[f"{col}_filtered"] = filtered
 
-    ordered_cols = ["timestamp_unix", "datetime_utc", "time_s", "Time (s)"] + channel_cols
+    ordered_cols = ["timestamp_unix", "datetime_utc", "time_s", time_col_name] + channel_cols
     filtered_cols: List[str] = []
     if apply_filter:
         filtered_cols = [f"{col}_filtered" for col in channel_cols]

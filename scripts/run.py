@@ -59,6 +59,7 @@ def run_pipeline(config_path: str = "configs/project.yaml", verbose: bool = True
             apply_filter=bool(a_opt.get("apply_filter", True)),
             remove_dc=bool(a_opt.get("remove_dc", True)),
             convert_to_g=bool(a_opt.get("convert_to_g", True)),
+            timezone_offset_hours=int(a_opt.get("timezone_offset_hours", 0)),
             verbose=verbose,
         )
 

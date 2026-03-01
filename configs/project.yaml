@@ -47,28 +47,29 @@ pipeline:
     full_report: true
 
   sensor_a:
-    raw_file: "data/raw/sensor_A/Setup5_20260203_095859.csv"
-    processed_file: "data/processed/Setup5_20260203_095859_processed.csv"
+    raw_file: "data/raw/sensor_A/1651_20260228_092312.csv"
+    processed_file: "data/processed/1651_20260228_092312_processed.csv"
     preprocess:
       apply_filter: true
       remove_dc: true
-      convert_to_g: true
+      convert_to_g: false
+      timezone_offset_hours: 7
 
   sensor_b:
-    raw_file: "data/raw/sensor_B/axdl355_2.csv"
-    processed_file: "data/processed/axdl355_2_processed.csv"
+    raw_file: "data/raw/sensor_B/1651_28_2_2026_9_22_44_1651Hz.csv"
+    processed_file: "data/processed/1651_28_2_2026_9_22_44_processed.csv"
     preprocess:
       apply_filter: true
       remove_dc_offset: true
 
   comparison:
     window:
-      start_utc: "2026-02-03T10:00:00Z"
-      duration_seconds: 100
+      start_utc: "2026-02-28T09:23:15Z"
+      duration_seconds: 120
 
     sensor_a:
       time_column: "datetime_utc"
-      value_column: "Channel 6 (g)"
+      value_column: "Channel 3 (g)"
       unit: "g"
 
     sensor_b:
