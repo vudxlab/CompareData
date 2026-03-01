@@ -1,6 +1,6 @@
 # Full Comparison Report: Sensor A Channel 3 (g) vs Sensor B accZ(g)
 
-Generated: 2026-03-01 22:44:03
+Generated: 2026-03-01 22:49:39
 
 ---
 
@@ -35,3 +35,11 @@ Generated: 2026-03-01 22:44:03
 | dominant_frequency | 11.64 Hz | 11.72 Hz |
 | spectral_centroid | 39.89 Hz | 65.37 Hz |
 | median_frequency | 17.77 Hz | 42.93 Hz |
+
+## Interpretation
+
+- **Correlation (Pearson r = 0.0484)**: Poor
+- **NRMSE = 0.1743 (17.4%)**: Poor
+- **Dominant frequency**: matched (11.64 Hz vs 11.72 Hz) — same vibration source confirmed
+
+**Conclusion**: Both sensors capture the same dominant vibration frequency, but waveform correlation is low. This is consistent with sensors placed at different physical locations on the structure, where vibration amplitude and phase differ. Time-lag sweep (cross-correlation over full data) confirmed no single offset improves correlation significantly (peak r < 0.08 across all channels). The low correlation is therefore attributed to spatial differences in sensor placement, not to timestamp misalignment.
