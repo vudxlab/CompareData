@@ -79,7 +79,7 @@ pipeline:
       unit: "g"
 
     alignment:
-      enabled: true
+      enabled: false
       max_lag_seconds: 2.0
 
     resampling:
