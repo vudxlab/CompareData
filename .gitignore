@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Data files (large files)
+*.csv
+*.xlsx
+*.xls
+*.mat
+*.h5
+*.hdf5
+
+# Keep data directory structure
+!data/.gitkeep
+!data/raw/.gitkeep
+!data/raw/sensor_A/.gitkeep
+!data/raw/sensor_B/.gitkeep
+!data/interim/.gitkeep
+!data/processed/.gitkeep
+
+# Results (regeneratable)
+results/figures/*.png
+results/figures/*.pdf
+results/tables/*.csv
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+*.env
+
+# Logs
+*.log
+logs/

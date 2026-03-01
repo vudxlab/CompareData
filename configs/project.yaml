@@ -1,0 +1,102 @@
+project:
+  name: "Accelerometer Comparison Project"
+  timezone: "UTC"
+
+sensors:
+  sensor_a:
+    name: "NI DAQ - Setup5"
+    manufacturer: "National Instruments"
+    model: "DAQ (Setup5)"
+    specifications:
+      sampling_rate: 2048
+      data_unit: "m/s^2"
+    data_format:
+      file_extension: ".csv"
+      delimiter: ","
+      encoding: "latin1"
+      skip_rows: 5
+      timestamp_column: "Time (s)"
+      timestamp_format: "relative_seconds"
+
+  sensor_b:
+    name: "ADXL355"
+    manufacturer: "Analog Devices"
+    model: "ADXL355"
+    specifications:
+      sampling_rate: 2000
+      data_unit: "g"
+    data_format:
+      file_extension: ".csv"
+      delimiter: ","
+      timestamp_column: "timestamp"
+      timestamp_format: "unix"
+      timestamp_unit: "s"
+
+preprocessing:
+  remove_dc_offset: true
+  filtering:
+    enabled: true
+    highpass_hz: 0.5
+    lowpass_hz: 500
+
+pipeline:
+  stages:
+    preprocess_sensor_a: true
+    preprocess_sensor_b: true
+    compare_pair: true
+    full_report: true
+
+  sensor_a:
+    raw_file: "data/raw/sensor_A/Setup5_20260203_095859.csv"
+    processed_file: "data/processed/Setup5_20260203_095859_processed.csv"
+    preprocess:
+      apply_filter: true
+      remove_dc: true
+      convert_to_g: true
+
+  sensor_b:
+    raw_file: "data/raw/sensor_B/axdl355_2.csv"
+    processed_file: "data/processed/axdl355_2_processed.csv"
+    preprocess:
+      apply_filter: true
+      remove_dc_offset: true
+
+  comparison:
+    window:
+      start_utc: "2026-02-03T10:00:00Z"
+      duration_seconds: 100
+
+    sensor_a:
+      time_column: "datetime_utc"
+      value_column: "Channel 6 (g)"
+      unit: "g"
+
+    sensor_b:
+      time_column: "datetime_utc"
+      value_column: "accZ(g)"
+      unit: "g"
+
+    alignment:
+      enabled: true
+      max_lag_seconds: 2.0
+
+    resampling:
+      enabled: true
+      target_fs_hz: 500.0
+
+    output:
+      metrics_csv: "results/tables/comparison_pair_metrics.csv"
+      aligned_csv: "results/tables/comparison_pair_aligned.csv"
+
+    full_report:
+      report_md: "results/reports/comparison_pair_report.md"
+      metrics_csv: "results/tables/comparison_pair_full_metrics.csv"
+      peaks_csv: "results/tables/comparison_pair_fft_peaks_0_50hz.csv"
+      figures_dir: "results/figures/comparison_pair"
+      display:
+        max_frequency_hz: 50
+        fft:
+          auto_yscale: true
+          y_percentile: 99.5
+          exclude_dc: true
+          top_n_peaks: 5
