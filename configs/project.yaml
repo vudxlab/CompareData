@@ -37,7 +37,15 @@ preprocessing:
   filtering:
     enabled: true
     highpass_hz: 0.5
+    highpass_order: 2
     lowpass_hz: 500
+    lowpass_order: 4
+  analysis:
+    freq_band_min_hz: 0.0
+    freq_band_max_hz: 20.0
+    fft_window: "hann"
+    peak_detection_threshold_sigma: 1.0
+    dominant_freq_tolerance_hz: 1.0
 
 pipeline:
   stages:

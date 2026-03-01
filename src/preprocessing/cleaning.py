@@ -13,6 +13,8 @@ def remove_outliers(
     threshold: float = 3.0
 ) -> Union[np.ndarray, pd.Series]:
     """
+    Utility function — not used in the main pipeline. Available for ad-hoc analysis.
+
     Remove outliers from data.
     
     Parameters
@@ -68,6 +70,8 @@ def fill_missing_values(
     **kwargs
 ) -> Union[np.ndarray, pd.Series, pd.DataFrame]:
     """
+    Utility function — not used in the main pipeline. Available for ad-hoc analysis.
+
     Fill missing values in data.
     
     Parameters

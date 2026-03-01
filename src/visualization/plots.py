@@ -206,23 +206,61 @@ def plot_bland_altman(
     """
     setup_plot_style()
     fig, ax = plt.subplots(figsize=(10, 8))
-    
+
     ax.scatter(mean_values, differences, alpha=0.3, s=1)
-    
+
     ax.axhline(y=mean_diff, color='blue', linestyle='-', label=f'Mean: {mean_diff:.4f}')
     ax.axhline(y=upper_loa, color='red', linestyle='--', label=f'+1.96 SD: {upper_loa:.4f}')
     ax.axhline(y=lower_loa, color='red', linestyle='--', label=f'-1.96 SD: {lower_loa:.4f}')
-    
+
     ax.set_xlabel('Mean of Two Measurements')
     ax.set_ylabel('Difference (A - B)')
     ax.set_title(title)
     ax.legend(loc='upper right')
     ax.grid(True, alpha=0.3)
-    
+
     plt.tight_layout()
-    
+
     if save_path:
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
         fig.savefig(save_path, dpi=300, bbox_inches='tight')
-    
+
+    return fig
+
+
+def plot_coherence(
+    frequencies: np.ndarray,
+    coherence_values: np.ndarray,
+    max_freq_hz: float = 50.0,
+    title: str = 'Coherence Analysis',
+    save_path: Optional[str] = None
+) -> plt.Figure:
+    """
+    Plot coherence vs frequency with threshold lines.
+    """
+    setup_plot_style()
+    fig, ax = plt.subplots(figsize=(12, 6))
+
+    mask = frequencies <= max_freq_hz
+    f_plot = frequencies[mask]
+    c_plot = coherence_values[mask]
+
+    ax.plot(f_plot, c_plot, color='#2ca02c', linewidth=1.0, label='Coherence')
+    ax.axhline(y=0.95, color='red', linestyle='--', alpha=0.7, label='Excellent (0.95)')
+    ax.axhline(y=0.80, color='orange', linestyle='--', alpha=0.7, label='Good (0.80)')
+
+    ax.set_xlabel('Frequency (Hz)')
+    ax.set_ylabel('Coherence')
+    ax.set_title(title)
+    ax.set_ylim(0, 1.05)
+    ax.set_xlim(0, max_freq_hz)
+    ax.legend(loc='lower left')
+    ax.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+
+    if save_path:
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        fig.savefig(save_path, dpi=300, bbox_inches='tight')
+
     return fig

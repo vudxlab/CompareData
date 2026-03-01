@@ -14,6 +14,7 @@ def generate_report(
     title: str = "Sensor Comparison Report",
     figures_dir: Any = None,
     report_md: Any = None,
+    dominant_freq_tolerance_hz: float = 1.0,
 ) -> str:
     """
     Generate a comprehensive comparison report.
@@ -58,10 +59,60 @@ def generate_report(
     
     report_lines.append("\n## Error Metrics\n")
     errors = comparison_results.get('error_metrics', {})
-    report_lines.append(f"- MAE: {errors.get('mae', 0):.6f}")
-    report_lines.append(f"- RMSE: {errors.get('rmse', 0):.6f}")
+    bootstrap_ci = comparison_results.get('bootstrap_ci', {})
+
+    pearson_r_val = corr.get('pearson_r', 0)
+    mae_val = errors.get('mae', 0)
+    rmse_val = errors.get('rmse', 0)
+
+    # Display with CI if available
+    if bootstrap_ci:
+        r_ci = bootstrap_ci.get('pearson_r_ci', (None, None))
+        rmse_ci = bootstrap_ci.get('rmse_ci', (None, None))
+        mae_ci = bootstrap_ci.get('mae_ci', (None, None))
+        report_lines.append(f"- Pearson r: {pearson_r_val:.6f} [95% CI: {r_ci[0]:.6f}, {r_ci[1]:.6f}]")
+        report_lines.append(f"- MAE: {mae_val:.6f} [95% CI: {mae_ci[0]:.6f}, {mae_ci[1]:.6f}]")
+        report_lines.append(f"- RMSE: {rmse_val:.6f} [95% CI: {rmse_ci[0]:.6f}, {rmse_ci[1]:.6f}]")
+    else:
+        report_lines.append(f"- MAE: {mae_val:.6f}")
+        report_lines.append(f"- RMSE: {rmse_val:.6f}")
     report_lines.append(f"- NRMSE: {errors.get('nrmse', 0):.6f}")
     report_lines.append(f"- Max Error: {errors.get('max_error', 0):.6f}")
+
+    # Coherence Analysis
+    coh = comparison_results.get('coherence', {})
+    if coh:
+        mean_coh = coh.get('mean', 0)
+        min_coh = coh.get('min', 0)
+        if mean_coh >= 0.95:
+            coh_rating = "Excellent"
+        elif mean_coh >= 0.80:
+            coh_rating = "Good"
+        elif mean_coh >= 0.60:
+            coh_rating = "Acceptable"
+        else:
+            coh_rating = "Poor"
+        report_lines.append("\n## Coherence Analysis\n")
+        report_lines.append(f"- Mean coherence: {mean_coh:.4f} ({coh_rating})")
+        report_lines.append(f"- Min coherence: {min_coh:.4f}")
+
+    # Bland-Altman with normality test
+    bland = comparison_results.get('bland_altman', {})
+    if bland:
+        report_lines.append("\n## Bland-Altman Analysis\n")
+        report_lines.append(f"- Mean difference: {bland.get('mean_difference', 0):.6f}")
+        report_lines.append(f"- Std difference (ddof=1): {bland.get('std_difference', 0):.6f}")
+        report_lines.append(f"- Upper LoA: {bland.get('upper_loa', 0):.6f}")
+        report_lines.append(f"- Lower LoA: {bland.get('lower_loa', 0):.6f}")
+        normality = bland.get('normality_test', {})
+        if normality:
+            report_lines.append(f"\n### Normality Test (Shapiro-Wilk)\n")
+            report_lines.append(f"- Statistic: {normality.get('statistic', 0):.6f}")
+            report_lines.append(f"- p-value: {normality.get('p_value', 0):.6f}")
+            if normality.get('is_normal', False):
+                report_lines.append("- Result: Differences are **normally distributed** (p > 0.05) — LoA valid")
+            else:
+                report_lines.append("- Result: Differences are **not normally distributed** (p <= 0.05) — LoA should be interpreted with caution")
     
     report_lines.append("\n## Frequency Domain Analysis\n")
     freq_a = comparison_results.get('sensor_a_freq', {})
@@ -87,6 +138,7 @@ def generate_report(
             ("psd.png",                 "PSD Comparison"),
             ("scatter.png",             "Scatter Plot"),
             ("bland_altman.png",        "Bland-Altman Plot"),
+            ("coherence.png",           "Coherence Analysis"),
         ]
         for fname, caption in figure_defs:
             fig_path = figures_dir / fname
@@ -134,7 +186,7 @@ def generate_report(
     nrmse = errors.get('nrmse', 0)
     dom_a = freq_a.get('dominant_frequency', 0)
     dom_b = freq_b.get('dominant_frequency', 0)
-    freq_match = abs(dom_a - dom_b) <= 1.0
+    freq_match = abs(dom_a - dom_b) <= dominant_freq_tolerance_hz
 
     # Correlation rating
     if abs(pearson_r) >= 0.99:

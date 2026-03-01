@@ -89,6 +89,8 @@ def bandpass_filter(
     order: int = 4
 ) -> np.ndarray:
     """
+    Utility function — not used in the main pipeline. Available for ad-hoc analysis.
+
     Apply Butterworth band-pass filter.
     
     Parameters
@@ -124,6 +126,8 @@ def moving_average(
     window_size: int
 ) -> np.ndarray:
     """
+    Utility function — not used in the main pipeline. Available for ad-hoc analysis.
+
     Apply moving average filter.
     
     Parameters

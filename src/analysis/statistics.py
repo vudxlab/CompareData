@@ -48,6 +48,8 @@ def compute_rms_over_windows(
     overlap: float = 0.5
 ) -> np.ndarray:
     """
+    Utility function — not used in the main pipeline. Available for ad-hoc analysis.
+
     Compute RMS values over sliding windows.
     
     Parameters
@@ -82,6 +84,8 @@ def compute_vector_magnitude(
     z: np.ndarray
 ) -> np.ndarray:
     """
+    Utility function — not used in the main pipeline. Available for ad-hoc analysis.
+
     Compute vector magnitude from 3-axis accelerometer data.
     
     Parameters

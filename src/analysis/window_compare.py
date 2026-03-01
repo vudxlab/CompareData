@@ -12,6 +12,7 @@ from typing import Dict, Tuple
 import numpy as np
 import pandas as pd
 
+from src.analysis._helpers import to_utc, to_g, estimate_fs, load_window_raw
 from src.analysis.comparison import compute_error_metrics
 from src.analysis.correlation import compute_correlation
 from src.utils.config import get_project_root, load_config
@@ -25,57 +26,29 @@ class SeriesSpec:
     unit: str
 
 
-def _to_utc(value: str) -> datetime:
-    dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
-    return dt.astimezone(timezone.utc)
-
-
 def _load_window(
     spec: SeriesSpec,
     start_utc: datetime,
     end_utc: datetime,
     chunksize: int = 200000,
 ) -> pd.DataFrame:
-    cols = [spec.time_column, spec.value_column]
-    parts = []
-    for chunk in pd.read_csv(spec.file, usecols=cols, chunksize=chunksize):
-        raw_t = chunk[spec.time_column]
-        # Robust parse:
-        # - numeric column -> Unix seconds
-        # - string column -> mixed datetime format
-        if pd.api.types.is_numeric_dtype(raw_t):
-            t = pd.to_datetime(raw_t, unit="s", utc=True, errors="coerce")
-        else:
-            t = pd.to_datetime(raw_t, utc=True, errors="coerce", format="mixed")
-        m = (t >= start_utc) & (t < end_utc)
-        if m.any():
-            out = chunk.loc[m].copy()
-            out[spec.time_column] = t.loc[m]
-            parts.append(out)
-    if not parts:
-        return pd.DataFrame(columns=cols)
-    return pd.concat(parts, ignore_index=True)
+    return load_window_raw(
+        file_path=spec.file,
+        time_col=spec.time_column,
+        value_col=spec.value_column,
+        start_utc=start_utc,
+        end_utc=end_utc,
+        chunksize=chunksize,
+    )
 
 
-def _to_g(values: np.ndarray, unit: str) -> np.ndarray:
-    if unit.lower() in {"g", "g-force"}:
-        return values
-    if unit.lower() in {"m/s^2", "m/s2"}:
-        return values / 9.80665
-    raise ValueError(f"Unsupported unit: {unit}")
-
-
-def _estimate_fs(t: np.ndarray) -> float:
-    dt = np.diff(t)
-    dt = dt[dt > 0]
-    if len(dt) == 0:
-        return 0.0
-    return float(1.0 / np.mean(dt))
-
-
-def _resample_linear(t: np.ndarray, x: np.ndarray, fs: float) -> Tuple[np.ndarray, np.ndarray]:
+def _resample_linear(t: np.ndarray, x: np.ndarray, fs: float, fs_source: float = 0.0) -> Tuple[np.ndarray, np.ndarray]:
+    # Anti-aliasing: if downsampling, apply lowpass filter before interpolation
+    if fs_source > 0 and fs < fs_source:
+        nyquist_target = fs / 2.0
+        cutoff = 0.9 * nyquist_target
+        from src.preprocessing.filtering import lowpass_filter
+        x = lowpass_filter(x, cutoff=cutoff, fs=fs_source, order=8)
     t0, t1 = float(t[0]), float(t[-1])
     n = int(np.floor((t1 - t0) * fs)) + 1
     t_new = t0 + np.arange(n) / fs
@@ -123,7 +96,7 @@ def compare_single_pair_from_config(config_path: str = "configs/project.yaml") -
         cfg["sensor_a"] = sensor_a_cfg
         cfg["sensor_b"] = sensor_b_cfg
 
-    start_utc = _to_utc(cfg["window"]["start_utc"])
+    start_utc = to_utc(cfg["window"]["start_utc"])
     end_utc = start_utc + timedelta(seconds=int(cfg["window"]["duration_seconds"]))
 
     sa = cfg["sensor_a"]
@@ -148,11 +121,11 @@ def compare_single_pair_from_config(config_path: str = "configs/project.yaml") -
 
     a_t = (df_a[spec_a.time_column] - start_utc).dt.total_seconds().to_numpy()
     b_t = (df_b[spec_b.time_column] - start_utc).dt.total_seconds().to_numpy()
-    a_v = _to_g(df_a[spec_a.value_column].to_numpy(dtype=float), spec_a.unit)
-    b_v = _to_g(df_b[spec_b.value_column].to_numpy(dtype=float), spec_b.unit)
+    a_v = to_g(df_a[spec_a.value_column].to_numpy(dtype=float), spec_a.unit)
+    b_v = to_g(df_b[spec_b.value_column].to_numpy(dtype=float), spec_b.unit)
 
-    fs_a = _estimate_fs(a_t)
-    fs_b = _estimate_fs(b_t)
+    fs_a = estimate_fs(a_t)
+    fs_b = estimate_fs(b_t)
     resampling_cfg = cfg.get("resampling", {})
     resampling_enabled = bool(resampling_cfg.get("enabled", True))
 
@@ -162,8 +135,8 @@ def compare_single_pair_from_config(config_path: str = "configs/project.yaml") -
         if fs_target <= 0:
             raise RuntimeError("Unable to estimate sampling frequency.")
 
-        ta, xa = _resample_linear(a_t, a_v, fs_target)
-        tb, xb = _resample_linear(b_t, b_v, fs_target)
+        ta, xa = _resample_linear(a_t, a_v, fs_target, fs_source=fs_a)
+        tb, xb = _resample_linear(b_t, b_v, fs_target, fs_source=fs_b)
         t0 = max(ta[0], tb[0])
         t1 = min(ta[-1], tb[-1])
         tc = np.arange(t0, t1, 1.0 / fs_target)

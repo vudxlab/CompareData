@@ -41,6 +41,15 @@ def run_pipeline(config_path: str = "configs/project.yaml", verbose: bool = True
     sensor_b_raw = PROJECT_ROOT / pipe["sensor_b"]["raw_file"]
     sensor_b_out = PROJECT_ROOT / pipe["sensor_b"]["processed_file"]
 
+    # Read filter params from config
+    filter_cfg = cfg.get("preprocessing", {}).get("filtering", {})
+    filter_params = {
+        "highpass_hz": float(filter_cfg.get("highpass_hz", 0.5)),
+        "highpass_order": int(filter_cfg.get("highpass_order", 2)),
+        "lowpass_hz": float(filter_cfg.get("lowpass_hz", 500)),
+        "lowpass_order": int(filter_cfg.get("lowpass_order", 4)),
+    }
+
     if stages.get("preprocess_sensor_b", True):
         b_opt = pipe["sensor_b"].get("preprocess", {})
         preprocess_adxl355(
@@ -50,6 +59,7 @@ def run_pipeline(config_path: str = "configs/project.yaml", verbose: bool = True
             remove_dc_offset=bool(b_opt.get("remove_dc_offset", True)),
             timezone_offset_hours=int(b_opt.get("timezone_offset_hours", 0)),
             verbose=verbose,
+            **filter_params,
         )
 
     if stages.get("preprocess_sensor_a", True):
@@ -62,6 +72,7 @@ def run_pipeline(config_path: str = "configs/project.yaml", verbose: bool = True
             convert_to_g=bool(a_opt.get("convert_to_g", True)),
             timezone_offset_hours=int(a_opt.get("timezone_offset_hours", 0)),
             verbose=verbose,
+            **filter_params,
         )
 
     if stages.get("compare_pair", True):

@@ -31,6 +31,10 @@ def preprocess_adxl355(
     apply_filter: bool = True,
     remove_dc_offset: bool = True,
     timezone_offset_hours: int = 0,
+    highpass_hz: float = 0.5,
+    highpass_order: int = 2,
+    lowpass_hz: float = 500,
+    lowpass_order: int = 4,
     verbose: bool = True,
 ) -> pd.DataFrame:
     """
@@ -60,8 +64,8 @@ def preprocess_adxl355(
 
     if apply_filter:
         for col in acc_cols:
-            filtered = highpass_filter(df[col].to_numpy(dtype=float), cutoff=0.5, fs=fs, order=2)
-            filtered = lowpass_filter(filtered, cutoff=500, fs=fs, order=4)
+            filtered = highpass_filter(df[col].to_numpy(dtype=float), cutoff=highpass_hz, fs=fs, order=highpass_order)
+            filtered = lowpass_filter(filtered, cutoff=lowpass_hz, fs=fs, order=lowpass_order)
             df[f"{col}_filtered"] = filtered
 
     df["acc_magnitude"] = np.sqrt(df["accX(g)"] ** 2 + df["accY(g)"] ** 2 + df["accZ(g)"] ** 2)
@@ -130,6 +134,10 @@ def preprocess_setup5_keep_channels(
     remove_dc: bool = True,
     convert_to_g: bool = True,
     timezone_offset_hours: int = 0,
+    highpass_hz: float = 0.5,
+    highpass_order: int = 2,
+    lowpass_hz: float = 500,
+    lowpass_order: int = 4,
     verbose: bool = True,
 ) -> pd.DataFrame:
     """
@@ -183,8 +191,8 @@ def preprocess_setup5_keep_channels(
 
     if apply_filter:
         for col in channel_cols:
-            filtered = highpass_filter(df[col].to_numpy(dtype=float), cutoff=0.5, fs=fs, order=2)
-            filtered = lowpass_filter(filtered, cutoff=500, fs=fs, order=4)
+            filtered = highpass_filter(df[col].to_numpy(dtype=float), cutoff=highpass_hz, fs=fs, order=highpass_order)
+            filtered = lowpass_filter(filtered, cutoff=lowpass_hz, fs=fs, order=lowpass_order)
             df[f"{col}_filtered"] = filtered
 
     ordered_cols = ["timestamp_unix", "datetime_utc", "time_s", time_col_name] + channel_cols

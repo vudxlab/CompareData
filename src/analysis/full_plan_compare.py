@@ -15,9 +15,11 @@ from src.analysis.comparison import bland_altman_analysis
 from src.analysis.frequency import compute_fft, compute_frequency_metrics, compute_psd, compute_freq_band_metrics
 from src.analysis.statistics import compute_time_domain_metrics
 from src.analysis.window_compare import compare_single_pair_from_config
+from src.analysis._helpers import to_utc, to_g, estimate_fs, load_window_raw
 from src.utils.config import get_project_root, load_config
 from src.visualization.plots import (
     plot_bland_altman,
+    plot_coherence,
     plot_comparison,
     plot_fft,
     plot_psd,
@@ -152,55 +154,6 @@ def _plot_3panel_utc(
     plt.close(fig)
 
 
-def _to_utc(value: str) -> datetime:
-    dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
-    return dt.astimezone(timezone.utc)
-
-
-def _to_g(values: np.ndarray, unit: str) -> np.ndarray:
-    u = unit.lower()
-    if u in {"g", "g-force"}:
-        return values
-    if u in {"m/s^2", "m/s2"}:
-        return values / 9.80665
-    raise ValueError(f"Unsupported unit: {unit}")
-
-
-def _estimate_fs(t: np.ndarray) -> float:
-    dt = np.diff(t)
-    dt = dt[dt > 0]
-    if len(dt) == 0:
-        return 0.0
-    return float(1.0 / np.mean(dt))
-
-
-def _load_window_raw(
-    file_path: Path,
-    time_col: str,
-    value_col: str,
-    start_utc: datetime,
-    end_utc: datetime,
-    chunksize: int = 200000,
-) -> pd.DataFrame:
-    parts = []
-    for chunk in pd.read_csv(file_path, usecols=[time_col, value_col], chunksize=chunksize):
-        raw_t = chunk[time_col]
-        if pd.api.types.is_numeric_dtype(raw_t):
-            t = pd.to_datetime(raw_t, unit="s", utc=True, errors="coerce")
-        else:
-            t = pd.to_datetime(raw_t, utc=True, errors="coerce", format="mixed")
-        m = (t >= start_utc) & (t < end_utc)
-        if m.any():
-            out = chunk.loc[m].copy()
-            out[time_col] = t.loc[m]
-            parts.append(out)
-    if not parts:
-        return pd.DataFrame(columns=[time_col, value_col])
-    return pd.concat(parts, ignore_index=True)
-
-
 def run_full_report_from_config(config_path: str = "configs/project.yaml") -> Dict[str, str]:
     """
     Run complete analysis and export report artifacts.
@@ -224,7 +177,7 @@ def run_full_report_from_config(config_path: str = "configs/project.yaml") -> Di
     sensor_b_stats = compute_time_domain_metrics(sensor_b)
 
     # FFT/PSD must use original windowed signals (before resampling/alignment).
-    start_utc = _to_utc(cfg["window"]["start_utc"])
+    start_utc = to_utc(cfg["window"]["start_utc"])
     end_utc = start_utc + timedelta(seconds=int(cfg["window"]["duration_seconds"]))
     pipeline_cfg = root_cfg.get("pipeline", {})
     sa_cfg = cfg["sensor_a"]
@@ -232,14 +185,14 @@ def run_full_report_from_config(config_path: str = "configs/project.yaml") -> Di
     sa_file = project_root / sa_cfg.get("file", pipeline_cfg.get("sensor_a", {}).get("processed_file", ""))
     sb_file = project_root / sb_cfg.get("file", pipeline_cfg.get("sensor_b", {}).get("processed_file", ""))
 
-    raw_a = _load_window_raw(
+    raw_a = load_window_raw(
         file_path=sa_file,
         time_col=sa_cfg["time_column"],
         value_col=sa_cfg["value_column"],
         start_utc=start_utc,
         end_utc=end_utc,
     )
-    raw_b = _load_window_raw(
+    raw_b = load_window_raw(
         file_path=sb_file,
         time_col=sb_cfg["time_column"],
         value_col=sb_cfg["value_column"],
@@ -251,15 +204,21 @@ def run_full_report_from_config(config_path: str = "configs/project.yaml") -> Di
 
     a_t = (raw_a[sa_cfg["time_column"]] - start_utc).dt.total_seconds().to_numpy()
     b_t = (raw_b[sb_cfg["time_column"]] - start_utc).dt.total_seconds().to_numpy()
-    a_raw_g = _to_g(raw_a[sa_cfg["value_column"]].to_numpy(dtype=float), sa_cfg["unit"])
-    b_raw_g = _to_g(raw_b[sb_cfg["value_column"]].to_numpy(dtype=float), sb_cfg["unit"])
-    fs_a_raw = _estimate_fs(a_t)
-    fs_b_raw = _estimate_fs(b_t)
+    a_raw_g = to_g(raw_a[sa_cfg["value_column"]].to_numpy(dtype=float), sa_cfg["unit"])
+    b_raw_g = to_g(raw_b[sb_cfg["value_column"]].to_numpy(dtype=float), sb_cfg["unit"])
+    fs_a_raw = estimate_fs(a_t)
+    fs_b_raw = estimate_fs(b_t)
     if fs_a_raw <= 0 or fs_b_raw <= 0:
         raise RuntimeError("Unable to estimate raw sampling frequency for FFT/PSD.")
 
-    freq_a, mag_a = compute_fft(a_raw_g, fs_a_raw)
-    freq_b, mag_b = compute_fft(b_raw_g, fs_b_raw)
+    analysis_cfg = root_cfg.get("preprocessing", {}).get("analysis", {})
+    freq_band_min = float(analysis_cfg.get("freq_band_min_hz", 0.0))
+    freq_band_max = float(analysis_cfg.get("freq_band_max_hz", 20.0))
+    fft_window = str(analysis_cfg.get("fft_window", "hann"))
+    dominant_freq_tolerance = float(analysis_cfg.get("dominant_freq_tolerance_hz", 1.0))
+
+    freq_a, mag_a = compute_fft(a_raw_g, fs_a_raw, window=fft_window)
+    freq_b, mag_b = compute_fft(b_raw_g, fs_b_raw, window=fft_window)
     sensor_a_freq = compute_frequency_metrics(freq_a, mag_a)
     sensor_b_freq = compute_frequency_metrics(freq_b, mag_b)
 
@@ -268,17 +227,29 @@ def run_full_report_from_config(config_path: str = "configs/project.yaml") -> Di
     psd_f_a, psd_a = compute_psd(a_raw_g, fs_a_raw, n_fft=n_fft_a, window="hann")
     psd_f_b, psd_b = compute_psd(b_raw_g, fs_b_raw, n_fft=n_fft_b, window="hann")
 
-    from src.analysis.correlation import compute_correlation
-    from src.analysis.comparison import compute_error_metrics
+    from src.analysis.correlation import compute_correlation, coherence
+    from src.analysis.comparison import compute_error_metrics, compute_bootstrap_ci
 
     correlation = compute_correlation(sensor_a, sensor_b)
     error_metrics = compute_error_metrics(sensor_a, sensor_b)
     bland = bland_altman_analysis(sensor_a, sensor_b)
 
+    # Coherence analysis
+    coh_freq, coh_values = coherence(sensor_a, sensor_b, fs=fs)
+    coherence_results = {
+        "frequencies": coh_freq,
+        "values": coh_values,
+        "mean": float(np.mean(coh_values)),
+        "min": float(np.min(coh_values)),
+    }
+
+    # Bootstrap confidence intervals
+    bootstrap_ci = compute_bootstrap_ci(sensor_a, sensor_b)
+
     freq_band_metrics = compute_freq_band_metrics(
         freq_a=freq_a, mag_a=mag_a,
         freq_b=freq_b, mag_b=mag_b,
-        f_min=0.0, f_max=20.0,
+        f_min=freq_band_min, f_max=freq_band_max,
     )
 
     results = {
@@ -289,6 +260,9 @@ def run_full_report_from_config(config_path: str = "configs/project.yaml") -> Di
         "sensor_a_freq": sensor_a_freq,
         "sensor_b_freq": sensor_b_freq,
         "freq_band_metrics": freq_band_metrics,
+        "coherence": coherence_results,
+        "bootstrap_ci": bootstrap_ci,
+        "bland_altman": bland,
     }
 
     full_cfg = cfg.get("full_report", {})
@@ -414,6 +388,16 @@ def run_full_report_from_config(config_path: str = "configs/project.yaml") -> Di
         save_path=str(fig_ba),
     )
 
+    # Coherence plot
+    fig_coherence = figures_dir / "coherence.png"
+    plot_coherence(
+        coherence_results["frequencies"],
+        coherence_results["values"],
+        max_freq_hz=max_freq_hz,
+        title="Coherence Analysis",
+        save_path=str(fig_coherence),
+    )
+
     # Save tabular metrics
     export_metrics_to_csv(results, str(metrics_csv))
 
@@ -455,6 +439,7 @@ def run_full_report_from_config(config_path: str = "configs/project.yaml") -> Di
         title=f"Full Comparison Report: Sensor A {sa_cfg['value_column']} vs Sensor B {sb_cfg['value_column']}",
         figures_dir=figures_dir,
         report_md=report_md,
+        dominant_freq_tolerance_hz=dominant_freq_tolerance,
     )
 
     # Save compact summary CSV

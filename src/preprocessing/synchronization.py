@@ -14,6 +14,8 @@ def find_time_offset(
     max_lag: float = 1.0
 ) -> Tuple[float, float]:
     """
+    Utility function — not used in the main pipeline. Available for ad-hoc analysis.
+
     Find time offset between two signals using cross-correlation.
     
     Parameters
@@ -56,6 +58,8 @@ def synchronize_signals(
     offset_samples: int
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
+    Utility function — not used in the main pipeline. Available for ad-hoc analysis.
+
     Synchronize two signals by applying offset.
     
     Parameters
@@ -95,6 +99,8 @@ def resample_to_common_rate(
     target_fs: float = None
 ) -> Tuple[np.ndarray, np.ndarray, float]:
     """
+    Utility function — not used in the main pipeline. Available for ad-hoc analysis.
+
     Resample signals to a common sampling rate.
     
     Parameters

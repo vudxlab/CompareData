@@ -11,11 +11,12 @@ from typing import Dict, Tuple
 def compute_fft(
     data: np.ndarray,
     fs: float,
-    n_fft: int = None
+    n_fft: int = None,
+    window: str = "hann",
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Compute FFT of signal.
-    
+
     Parameters
     ----------
     data : np.ndarray
@@ -24,7 +25,9 @@ def compute_fft(
         Sampling frequency in Hz
     n_fft : int, optional
         FFT size. If None, uses signal length.
-    
+    window : str or None
+        Window function name (e.g. "hann", "hamming"). None for no windowing.
+
     Returns
     -------
     tuple
@@ -32,14 +35,22 @@ def compute_fft(
     """
     if n_fft is None:
         n_fft = len(data)
-    
+
+    if window:
+        win = signal.get_window(window, len(data))
+        data = data * win
+        # Amplitude correction factor to compensate for window energy loss
+        acf = len(data) / np.sum(win)
+    else:
+        acf = 1.0
+
     fft_result = fft(data, n_fft)
     frequencies = fftfreq(n_fft, 1/fs)
-    
+
     positive_freq_idx = frequencies >= 0
     frequencies = frequencies[positive_freq_idx]
-    magnitude = np.abs(fft_result[positive_freq_idx]) * 2 / n_fft
-    
+    magnitude = np.abs(fft_result[positive_freq_idx]) * 2 / n_fft * acf
+
     return frequencies, magnitude
 
 
