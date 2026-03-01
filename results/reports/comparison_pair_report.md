@@ -1,6 +1,6 @@
 # Full Comparison Report: Sensor A Channel 3 (g) vs Sensor B accZ(g)
 
-Generated: 2026-03-01 23:14:19
+Generated: 2026-03-01 23:19:09
 
 ---
 
@@ -41,6 +41,10 @@ Generated: 2026-03-01 23:14:19
 ### Time Series — Sensor A, Sensor B, Overlay (UTC axis)
 
 ![](../figures/comparison_pair/time_series_3panel.png)
+
+### Frequency Domain — FFT A, FFT B, PSD Overlay (0–20 Hz)
+
+![](../figures/comparison_pair/freq_3panel_0_20hz.png)
 
 ### Time Series — Overlay (resampled)
 

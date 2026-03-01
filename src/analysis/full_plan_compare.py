@@ -26,6 +26,68 @@ from src.visualization.plots import (
 from src.visualization.reports import export_metrics_to_csv, generate_report
 
 
+def _plot_freq_3panel(
+    freq_a: np.ndarray,
+    mag_a: np.ndarray,
+    freq_b: np.ndarray,
+    mag_b: np.ndarray,
+    psd_f_a: np.ndarray,
+    psd_a: np.ndarray,
+    psd_f_b: np.ndarray,
+    psd_b: np.ndarray,
+    val_col_a: str,
+    val_col_b: str,
+    max_hz: float,
+    save_path: str,
+) -> None:
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    mask_a = (freq_a > 0) & (freq_a <= max_hz)
+    mask_b = (freq_b > 0) & (freq_b <= max_hz)
+    fa, ma = freq_a[mask_a], mag_a[mask_a]
+    fb, mb = freq_b[mask_b], mag_b[mask_b]
+
+    pmask_a = (psd_f_a > 0) & (psd_f_a <= max_hz)
+    pmask_b = (psd_f_b > 0) & (psd_f_b <= max_hz)
+    pfa, pa = psd_f_a[pmask_a], psd_a[pmask_a]
+    pfb, pb = psd_f_b[pmask_b], psd_b[pmask_b]
+
+    fig, axes = plt.subplots(3, 1, figsize=(12, 10))
+    fig.suptitle(f"Frequency Domain Comparison (0–{max_hz:.0f} Hz)", fontsize=13, fontweight="bold")
+
+    # Panel 1: FFT Sensor A
+    axes[0].plot(fa, ma, color="#1f77b4", linewidth=0.8, label=f"Sensor A – {val_col_a}")
+    axes[0].set_ylabel("Magnitude")
+    axes[0].set_title(f"FFT – Sensor A ({val_col_a})")
+    axes[0].legend(loc="upper right", fontsize=8)
+    axes[0].grid(True, alpha=0.3)
+    axes[0].set_xlim(0, max_hz)
+
+    # Panel 2: FFT Sensor B
+    axes[1].plot(fb, mb, color="#ff7f0e", linewidth=0.8, label=f"Sensor B – {val_col_b}")
+    axes[1].set_ylabel("Magnitude")
+    axes[1].set_title(f"FFT – Sensor B ({val_col_b})")
+    axes[1].legend(loc="upper right", fontsize=8)
+    axes[1].grid(True, alpha=0.3)
+    axes[1].set_xlim(0, max_hz)
+
+    # Panel 3: PSD overlay
+    axes[2].semilogy(pfa, pa, color="#1f77b4", linewidth=0.8, alpha=0.85, label=f"Sensor A – {val_col_a}")
+    axes[2].semilogy(pfb, pb, color="#ff7f0e", linewidth=0.8, alpha=0.85, label=f"Sensor B – {val_col_b}")
+    axes[2].set_ylabel("PSD (g²/Hz)")
+    axes[2].set_xlabel("Frequency (Hz)")
+    axes[2].set_title("PSD – Sensor A vs Sensor B (Overlay)")
+    axes[2].legend(loc="upper right", fontsize=8)
+    axes[2].grid(True, alpha=0.3)
+    axes[2].set_xlim(0, max_hz)
+
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+
+
 def _plot_3panel_utc(
     raw_a: "pd.DataFrame",
     raw_b: "pd.DataFrame",
@@ -360,6 +422,23 @@ def run_full_report_from_config(config_path: str = "configs/project.yaml") -> Di
         start_utc=start_utc,
         duration_s=int(cfg["window"]["duration_seconds"]),
         save_path=str(fig_3panel),
+    )
+
+    # Save 3-panel frequency figure (0-20 Hz)
+    fig_freq_3panel = figures_dir / "freq_3panel_0_20hz.png"
+    _plot_freq_3panel(
+        freq_a=freq_a,
+        mag_a=mag_a,
+        freq_b=freq_b,
+        mag_b=mag_b,
+        psd_f_a=psd_f_a,
+        psd_a=psd_a,
+        psd_f_b=psd_f_b,
+        psd_b=psd_b,
+        val_col_a=sa_cfg["value_column"],
+        val_col_b=sb_cfg["value_column"],
+        max_hz=20.0,
+        save_path=str(fig_freq_3panel),
     )
 
     # Save markdown report

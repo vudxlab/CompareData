@@ -80,12 +80,13 @@ def generate_report(
         report_dir = Path(report_md).parent
         report_lines.append("\n## Figures\n")
         figure_defs = [
-            ("time_series_3panel.png", "Time Series — Sensor A, Sensor B, Overlay (UTC axis)"),
-            ("time_series.png",        "Time Series — Overlay (resampled)"),
-            ("fft.png",                "FFT Comparison"),
-            ("psd.png",                "PSD Comparison"),
-            ("scatter.png",            "Scatter Plot"),
-            ("bland_altman.png",       "Bland-Altman Plot"),
+            ("time_series_3panel.png",  "Time Series — Sensor A, Sensor B, Overlay (UTC axis)"),
+            ("freq_3panel_0_20hz.png",  "Frequency Domain — FFT A, FFT B, PSD Overlay (0–20 Hz)"),
+            ("time_series.png",         "Time Series — Overlay (resampled)"),
+            ("fft.png",                 "FFT Comparison"),
+            ("psd.png",                 "PSD Comparison"),
+            ("scatter.png",             "Scatter Plot"),
+            ("bland_altman.png",        "Bland-Altman Plot"),
         ]
         for fname, caption in figure_defs:
             fig_path = figures_dir / fname
