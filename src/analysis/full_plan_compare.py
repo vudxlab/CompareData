@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 
 from src.analysis.comparison import bland_altman_analysis
-from src.analysis.frequency import compute_fft, compute_frequency_metrics, compute_psd
+from src.analysis.frequency import compute_fft, compute_frequency_metrics, compute_psd, compute_freq_band_metrics
 from src.analysis.statistics import compute_time_domain_metrics
 from src.analysis.window_compare import compare_single_pair_from_config
 from src.utils.config import get_project_root, load_config
@@ -275,6 +275,12 @@ def run_full_report_from_config(config_path: str = "configs/project.yaml") -> Di
     error_metrics = compute_error_metrics(sensor_a, sensor_b)
     bland = bland_altman_analysis(sensor_a, sensor_b)
 
+    freq_band_metrics = compute_freq_band_metrics(
+        freq_a=freq_a, mag_a=mag_a,
+        freq_b=freq_b, mag_b=mag_b,
+        f_min=0.0, f_max=20.0,
+    )
+
     results = {
         "sensor_a_stats": sensor_a_stats,
         "sensor_b_stats": sensor_b_stats,
@@ -282,6 +288,7 @@ def run_full_report_from_config(config_path: str = "configs/project.yaml") -> Di
         "error_metrics": error_metrics,
         "sensor_a_freq": sensor_a_freq,
         "sensor_b_freq": sensor_b_freq,
+        "freq_band_metrics": freq_band_metrics,
     }
 
     full_cfg = cfg.get("full_report", {})

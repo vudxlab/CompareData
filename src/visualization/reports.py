@@ -97,6 +97,36 @@ def generate_report(
                 report_lines.append(f"### {caption}\n")
                 report_lines.append(f"![]({rel})\n")
     
+    report_lines.append("\n## Frequency Band Analysis (0–20 Hz)\n")
+    fb_metrics = comparison_results.get('freq_band_metrics', {})
+    if fb_metrics:
+        report_lines.append("### Per-sensor Statistics\n")
+        report_lines.append("| Metric | Sensor A | Sensor B | Difference |")
+        report_lines.append("|--------|----------|----------|------------|")
+        stat_rows = [
+            ("mean (magnitude)", "mean_a", "mean_b"),
+            ("std (magnitude)",  "std_a",  "std_b"),
+            ("rms (magnitude)",  "rms_a",  "rms_b"),
+            ("peak (magnitude)", "peak_a", "peak_b"),
+            ("peak frequency (Hz)", "peak_freq_a", "peak_freq_b"),
+            ("spectral energy",  "spectral_energy_a", "spectral_energy_b"),
+        ]
+        for label, key_a, key_b in stat_rows:
+            va = fb_metrics.get(key_a, float("nan"))
+            vb = fb_metrics.get(key_b, float("nan"))
+            diff = va - vb
+            report_lines.append(f"| {label} | {va:.6f} | {vb:.6f} | {diff:.6f} |")
+
+        report_lines.append(f"\n- **Energy ratio (A/B)**: {fb_metrics.get('energy_ratio', float('nan')):.4f}")
+
+        report_lines.append("\n### Spectral Comparison Metrics\n")
+        report_lines.append("| Metric | Value |")
+        report_lines.append("|--------|-------|")
+        report_lines.append(f"| Pearson r (spectra) | {fb_metrics.get('pearson_r', float('nan')):.6f} |")
+        report_lines.append(f"| MAE (magnitude) | {fb_metrics.get('mae', float('nan')):.6f} |")
+        report_lines.append(f"| RMSE (magnitude) | {fb_metrics.get('rmse', float('nan')):.6f} |")
+        report_lines.append(f"| NRMSE (magnitude) | {fb_metrics.get('nrmse', float('nan')):.6f} |")
+
     # Interpretation
     report_lines.append("\n## Interpretation\n")
 

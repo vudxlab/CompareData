@@ -1,6 +1,6 @@
 # Full Comparison Report: Sensor A Channel 3 (g) vs Sensor B accZ(g)
 
-Generated: 2026-03-01 23:19:09
+Generated: 2026-03-01 23:29:26
 
 ---
 
@@ -66,6 +66,30 @@ Generated: 2026-03-01 23:19:09
 
 ![](../figures/comparison_pair/bland_altman.png)
 
+
+## Frequency Band Analysis (0–20 Hz)
+
+### Per-sensor Statistics
+
+| Metric | Sensor A | Sensor B | Difference |
+|--------|----------|----------|------------|
+| mean (magnitude) | 0.000431 | 0.000669 | -0.000238 |
+| std (magnitude) | 0.000705 | 0.000768 | -0.000062 |
+| rms (magnitude) | 0.000827 | 0.001018 | -0.000192 |
+| peak (magnitude) | 0.007814 | 0.006746 | 0.001068 |
+| peak frequency (Hz) | 11.640000 | 11.720000 | -0.080000 |
+| spectral energy | 0.001367 | 0.002073 | -0.000706 |
+
+- **Energy ratio (A/B)**: 0.6595
+
+### Spectral Comparison Metrics
+
+| Metric | Value |
+|--------|-------|
+| Pearson r (spectra) | 0.594395 |
+| MAE (magnitude) | 0.000429 |
+| RMSE (magnitude) | 0.000707 |
+| NRMSE (magnitude) | 0.090440 |
 
 ## Interpretation
 
