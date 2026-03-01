@@ -1,6 +1,6 @@
 # Full Comparison Report: Sensor A Channel 3 (g) vs Sensor B accZ(g)
 
-Generated: 2026-03-01 22:54:15
+Generated: 2026-03-01 23:14:19
 
 ---
 
@@ -35,6 +35,33 @@ Generated: 2026-03-01 22:54:15
 | dominant_frequency | 11.64 Hz | 11.72 Hz |
 | spectral_centroid | 39.89 Hz | 65.37 Hz |
 | median_frequency | 17.77 Hz | 42.93 Hz |
+
+## Figures
+
+### Time Series — Sensor A, Sensor B, Overlay (UTC axis)
+
+![](../figures/comparison_pair/time_series_3panel.png)
+
+### Time Series — Overlay (resampled)
+
+![](../figures/comparison_pair/time_series.png)
+
+### FFT Comparison
+
+![](../figures/comparison_pair/fft.png)
+
+### PSD Comparison
+
+![](../figures/comparison_pair/psd.png)
+
+### Scatter Plot
+
+![](../figures/comparison_pair/scatter.png)
+
+### Bland-Altman Plot
+
+![](../figures/comparison_pair/bland_altman.png)
+
 
 ## Interpretation
 

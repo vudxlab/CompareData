@@ -11,7 +11,9 @@ from datetime import datetime
 def generate_report(
     comparison_results: Dict[str, Any],
     output_path: str,
-    title: str = "Sensor Comparison Report"
+    title: str = "Sensor Comparison Report",
+    figures_dir: Any = None,
+    report_md: Any = None,
 ) -> str:
     """
     Generate a comprehensive comparison report.
@@ -64,13 +66,35 @@ def generate_report(
     report_lines.append("\n## Frequency Domain Analysis\n")
     freq_a = comparison_results.get('sensor_a_freq', {})
     freq_b = comparison_results.get('sensor_b_freq', {})
-    
+
     report_lines.append("| Metric | Sensor A | Sensor B |")
     report_lines.append("|--------|----------|----------|")
     for metric in ['dominant_frequency', 'spectral_centroid', 'median_frequency']:
         val_a = freq_a.get(metric, 0)
         val_b = freq_b.get(metric, 0)
         report_lines.append(f"| {metric} | {val_a:.2f} Hz | {val_b:.2f} Hz |")
+
+    # Figures section — paths relative to report location
+    if figures_dir is not None and report_md is not None:
+        figures_dir = Path(figures_dir)
+        report_dir = Path(report_md).parent
+        report_lines.append("\n## Figures\n")
+        figure_defs = [
+            ("time_series_3panel.png", "Time Series — Sensor A, Sensor B, Overlay (UTC axis)"),
+            ("time_series.png",        "Time Series — Overlay (resampled)"),
+            ("fft.png",                "FFT Comparison"),
+            ("psd.png",                "PSD Comparison"),
+            ("scatter.png",            "Scatter Plot"),
+            ("bland_altman.png",       "Bland-Altman Plot"),
+        ]
+        for fname, caption in figure_defs:
+            fig_path = figures_dir / fname
+            if fig_path.exists():
+                # compute relative path from report dir using os.path
+                import os
+                rel = os.path.relpath(str(fig_path), str(report_dir)).replace("\\", "/")
+                report_lines.append(f"### {caption}\n")
+                report_lines.append(f"![]({rel})\n")
     
     # Interpretation
     report_lines.append("\n## Interpretation\n")

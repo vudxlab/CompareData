@@ -26,6 +26,70 @@ from src.visualization.plots import (
 from src.visualization.reports import export_metrics_to_csv, generate_report
 
 
+def _plot_3panel_utc(
+    raw_a: "pd.DataFrame",
+    raw_b: "pd.DataFrame",
+    time_col_a: str,
+    time_col_b: str,
+    val_col_a: str,
+    val_col_b: str,
+    start_utc: datetime,
+    duration_s: int,
+    save_path: str,
+) -> None:
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    import matplotlib.dates as mdates
+
+    t_a = raw_a[time_col_a].values
+    t_b = raw_b[time_col_b].values
+    sig_a = raw_a[val_col_a].to_numpy(dtype=float)
+    sig_b = raw_b[val_col_b].to_numpy(dtype=float)
+
+    fmt = mdates.DateFormatter("%H:%M:%S")
+    end_utc = start_utc + timedelta(seconds=duration_s)
+    title = (
+        f"Time Series Comparison\n"
+        f"Window: {start_utc.strftime('%Y-%m-%d %H:%M:%S')} UTC, {duration_s}s"
+    )
+
+    fig, axes = plt.subplots(3, 1, figsize=(12, 9))
+    fig.suptitle(title, fontsize=13, fontweight="bold")
+
+    axes[0].plot(t_a, sig_a, color="#1f77b4", linewidth=0.6, label=f"Sensor A – {val_col_a}")
+    axes[0].set_ylabel("Acceleration (g)")
+    axes[0].set_title(f"Sensor A – NI DAQ ({val_col_a})")
+    axes[0].legend(loc="upper right", fontsize=8)
+    axes[0].grid(True, alpha=0.3)
+    axes[0].xaxis.set_major_formatter(fmt)
+    axes[0].set_xlabel("Time (UTC)")
+    axes[0].set_xlim(t_a[0], t_a[-1])
+
+    axes[1].plot(t_b, sig_b, color="#ff7f0e", linewidth=0.6, label=f"Sensor B – {val_col_b}")
+    axes[1].set_ylabel("Acceleration (g)")
+    axes[1].set_title(f"Sensor B – ADXL355 ({val_col_b})")
+    axes[1].legend(loc="upper right", fontsize=8)
+    axes[1].grid(True, alpha=0.3)
+    axes[1].xaxis.set_major_formatter(fmt)
+    axes[1].set_xlabel("Time (UTC)")
+    axes[1].set_xlim(t_b[0], t_b[-1])
+
+    axes[2].plot(t_a, sig_a, color="#1f77b4", linewidth=0.6, alpha=0.8, label=f"Sensor A – {val_col_a}")
+    axes[2].plot(t_b, sig_b, color="#ff7f0e", linewidth=0.6, alpha=0.8, label=f"Sensor B – {val_col_b}")
+    axes[2].set_ylabel("Acceleration (g)")
+    axes[2].set_xlabel("Time (UTC)")
+    axes[2].set_title("Sensor A vs Sensor B – Overlay")
+    axes[2].legend(loc="upper right", fontsize=8)
+    axes[2].grid(True, alpha=0.3)
+    axes[2].xaxis.set_major_formatter(fmt)
+    axes[2].set_xlim(max(t_a[0], t_b[0]), min(t_a[-1], t_b[-1]))
+
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+
+
 def _to_utc(value: str) -> datetime:
     dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
     if dt.tzinfo is None:
@@ -284,11 +348,27 @@ def run_full_report_from_config(config_path: str = "configs/project.yaml") -> Di
     # Save tabular metrics
     export_metrics_to_csv(results, str(metrics_csv))
 
+    # Save 3-panel time series figure with UTC axis
+    fig_3panel = figures_dir / "time_series_3panel.png"
+    _plot_3panel_utc(
+        raw_a=raw_a,
+        raw_b=raw_b,
+        time_col_a=sa_cfg["time_column"],
+        time_col_b=sb_cfg["time_column"],
+        val_col_a=sa_cfg["value_column"],
+        val_col_b=sb_cfg["value_column"],
+        start_utc=start_utc,
+        duration_s=int(cfg["window"]["duration_seconds"]),
+        save_path=str(fig_3panel),
+    )
+
     # Save markdown report
     report_path = generate_report(
         comparison_results=results,
         output_path=str(report_md),
         title=f"Full Comparison Report: Sensor A {sa_cfg['value_column']} vs Sensor B {sb_cfg['value_column']}",
+        figures_dir=figures_dir,
+        report_md=report_md,
     )
 
     # Save compact summary CSV
