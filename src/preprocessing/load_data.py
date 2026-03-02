@@ -1,5 +1,5 @@
 """
-Load and preprocess raw data for Sensor_A (Setup5) and Sensor_B (ADXL355).
+Load and preprocess raw data for Sensor_A (353B34) and Sensor_B (ADXL355).
 """
 
 from __future__ import annotations
@@ -85,9 +85,9 @@ def preprocess_adxl355(
     return out_df
 
 
-def load_setup5_with_metadata(file_path: str | Path) -> Tuple[pd.DataFrame, Dict[str, str]]:
+def load_353B34_with_metadata(file_path: str | Path) -> Tuple[pd.DataFrame, Dict[str, str]]:
     """
-    Load Setup5 CSV with metadata lines that start with '#'.
+    Load 353B34 CSV with metadata lines that start with '#'.
 
     The function preserves original column names such as:
     - Time (s)
@@ -106,16 +106,16 @@ def load_setup5_with_metadata(file_path: str | Path) -> Tuple[pd.DataFrame, Dict
             key, value = content.split(":", 1)
             metadata[key.strip()] = value.strip().rstrip(",").strip()
 
-    # Setup5 format: 5 metadata lines then header line
+    # 353B34 format: 5 metadata lines then header line
     df = pd.read_csv(file_path, skiprows=5, encoding="latin1")
     # Normalize accidental trailing spaces in exported headers.
     df.columns = [str(c).strip() for c in df.columns]
     return df, metadata
 
 
-def detect_setup5_channel_columns(columns: List[str]) -> List[str]:
+def detect_353B34_channel_columns(columns: List[str]) -> List[str]:
     """
-    Detect and sort Setup5 channel columns by channel index.
+    Detect and sort 353B34 channel columns by channel index.
     """
     pattern = re.compile(r"^Channel\s+(\d+)(?:\s+\(|$)")
     pairs = []
@@ -127,7 +127,7 @@ def detect_setup5_channel_columns(columns: List[str]) -> List[str]:
     return [col for _, col in pairs]
 
 
-def preprocess_setup5_keep_channels(
+def preprocess_353B34_keep_channels(
     input_file: str | Path,
     output_file: str | Path | None = None,
     apply_filter: bool = True,
@@ -141,7 +141,7 @@ def preprocess_setup5_keep_channels(
     verbose: bool = True,
 ) -> pd.DataFrame:
     """
-    Preprocess Setup5 data and keep original Channel names.
+    Preprocess 353B34 data and keep original Channel names.
 
     Added columns:
     - timestamp_unix
@@ -158,11 +158,11 @@ def preprocess_setup5_keep_channels(
       and column units are renamed to "(g)" while keeping "Channel n" naming.
     """
     input_file = Path(input_file)
-    df, metadata = load_setup5_with_metadata(input_file)
+    df, metadata = load_353B34_with_metadata(input_file)
 
-    channel_cols = detect_setup5_channel_columns(list(df.columns))
+    channel_cols = detect_353B34_channel_columns(list(df.columns))
     if not channel_cols:
-        raise ValueError("No channel columns detected in Setup5 file.")
+        raise ValueError("No channel columns detected in 353B34 file.")
 
     df = df.copy()
     if "Time (UTC epoch s)" in df.columns:
@@ -174,14 +174,14 @@ def preprocess_setup5_keep_channels(
     elif "Time (s)" in df.columns:
         start_time_str = metadata.get("Start Time") or metadata.get("Start Time (UTC)")
         if not start_time_str:
-            raise ValueError("Missing 'Start Time' in Setup5 metadata.")
+            raise ValueError("Missing 'Start Time' in 353B34 metadata.")
         start_utc = datetime.strptime(start_time_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
         df["time_s"] = df["Time (s)"].astype(float)
         df["datetime_utc"] = start_utc + pd.to_timedelta(df["time_s"], unit="s")
         df["timestamp_unix"] = df["datetime_utc"].astype("int64") / 1e9
         time_col_name = "Time (s)"
     else:
-        raise ValueError("Missing required time column ('Time (s)' or 'Time (UTC epoch s)') in Setup5 file.")
+        raise ValueError("Missing required time column ('Time (s)' or 'Time (UTC epoch s)') in 353B34 file.")
 
     fs = 1.0 / np.mean(np.diff(df["time_s"].to_numpy()))
 
@@ -236,6 +236,6 @@ def preprocess_setup5_keep_channels(
         output_file.parent.mkdir(parents=True, exist_ok=True)
         out_df.to_csv(output_file, index=False)
         if verbose:
-            print("[setup5] saved:", output_file)
+            print("[353B34] saved:", output_file)
 
     return out_df

@@ -1,6 +1,6 @@
 # Báo cáo Hạn chế và Đề xuất Cải thiện
 
-**Dự án:** So sánh dữ liệu gia tốc giữa hai hệ thống cảm biến (NI DAQ Setup5 vs ADXL355)
+**Dự án:** So sánh dữ liệu gia tốc giữa hai hệ thống cảm biến (NI DAQ 353B34 vs ADXL355)
 **Ngày:** 2026-03-02 (cập nhật)
 **Mục đích:** Phục vụ viết bài báo khoa học — đánh giá khách quan các hạn chế kỹ thuật và phương pháp luận
 

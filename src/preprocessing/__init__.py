@@ -13,9 +13,9 @@ from .time_conversion import (
     get_time_info
 )
 from .load_data import (
-    load_setup5_with_metadata,
-    detect_setup5_channel_columns,
-    preprocess_setup5_keep_channels,
+    load_353B34_with_metadata,
+    detect_353B34_channel_columns,
+    preprocess_353B34_keep_channels,
     load_adxl355,
     preprocess_adxl355,
 )

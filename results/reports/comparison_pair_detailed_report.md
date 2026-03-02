@@ -4,7 +4,7 @@
 
 Báo cáo này tổng hợp kết quả so sánh giữa 2 chuỗi dữ liệu gia tốc:
 
-- **Sensor A**: `NI DAQ - Setup5`, kênh `Channel 3 (g)`
+- **Sensor A**: `NI DAQ - 353B34`, kênh `Channel 3 (g)`
 - **Sensor B**: `ADXL355`, kênh `accZ(g)`
 
 Dữ liệu được xử lý và so sánh theo cấu hình trong `configs/project.yaml`.

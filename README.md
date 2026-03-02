@@ -1,7 +1,7 @@
 # Accelerometer Comparison Project
 
 Project so sánh dữ liệu gia tốc giữa:
-- `sensor_A`: NI DAQ (Setup5, các kênh `Channel 1..8`)
+- `sensor_A`: NI DAQ (353B34, các kênh `Channel 1..8`)
 - `sensor_B`: ADXL355 (`accX/accY/accZ`)
 
 Hiện tại workflow mặc định đang so sánh:

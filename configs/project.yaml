@@ -4,9 +4,9 @@ project:
 
 sensors:
   sensor_a:
-    name: "NI DAQ - Setup5"
+    name: "NI DAQ - 353B34"
     manufacturer: "National Instruments"
-    model: "DAQ (Setup5)"
+    model: "DAQ (353B34)"
     specifications:
       sampling_rate: 1651
       data_unit: "g"

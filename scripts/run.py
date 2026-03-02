@@ -22,7 +22,7 @@ PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.analysis import compare_single_pair_from_config, run_full_report_from_config
-from src.preprocessing import preprocess_adxl355, preprocess_setup5_keep_channels
+from src.preprocessing import preprocess_adxl355, preprocess_353B34_keep_channels
 
 
 def load_project_config(config_path: str = "configs/project.yaml") -> Dict[str, Any]:
@@ -64,7 +64,7 @@ def run_pipeline(config_path: str = "configs/project.yaml", verbose: bool = True
 
     if stages.get("preprocess_sensor_a", True):
         a_opt = pipe["sensor_a"].get("preprocess", {})
-        preprocess_setup5_keep_channels(
+        preprocess_353B34_keep_channels(
             input_file=sensor_a_raw,
             output_file=sensor_a_out,
             apply_filter=bool(a_opt.get("apply_filter", True)),
